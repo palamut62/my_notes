@@ -98,6 +98,6 @@ Distributed under the MIT License.
 
 ## 📞 Contact
 
-Umut ÇELİK - [@umutinann](https://twitter.com/palamut62)
+Umut ÇELİK - [@palamut62](https://twitter.com/palamut62)
 
 Project Link: [https://github.com/palamut62/mynotes](https://github.com/palamut62/mynotes)
