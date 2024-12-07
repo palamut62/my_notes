@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+
+# Misc
+.DS_Store
+Thumbs.db
+.env
+
+
