@@ -11,7 +11,10 @@ import {
   LogOut,
   User,
   ChevronRight,
-  X
+  X,
+  Github,
+  Twitter,
+  Globe
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useNoteStore } from '../store/noteStore';
@@ -87,27 +90,14 @@ export default function Layout({}: LayoutProps) {
 
       {/* Sidebar */}
       <aside
-        className={`
-          fixed top-0 left-0 z-40 h-screen transition-transform
-          ${isSidebarOpen ? 'w-64' : 'w-20'}
-          ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-          bg-dark-800 border-r border-dark-700
-        `}
+        className={`fixed inset-y-0 left-0 bg-slate-900 transition-all duration-300 ${isSidebarOpen ? 'w-64' : 'w-20'} hidden lg:block z-10`}
       >
-        {/* Toggle Button */}
-        <button
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="hidden lg:flex absolute -right-3 top-8 p-1.5 rounded-full bg-dark-700 text-dark-400 hover:text-dark-200"
-        >
-          <ChevronRight className={`h-4 w-4 transition-transform ${isSidebarOpen ? 'rotate-180' : ''}`} />
-        </button>
-
-        <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="h-16 flex items-center px-6">
-            <span className={`text-xl font-bold text-primary-400 ${!isSidebarOpen && 'hidden'}`}>
-              SecureVault
-            </span>
+        <div className="flex h-full flex-col">
+          <div className="flex h-16 items-center justify-center">
+            <img src="/logo.svg" alt="SecureVault Logo" className="h-8 w-8" />
+            {isSidebarOpen && (
+              <span className="ml-2 text-xl font-semibold text-emerald-400">SecureVault</span>
+            )}
           </div>
 
           {/* Navigation */}
@@ -197,6 +187,22 @@ export default function Layout({}: LayoutProps) {
         <div className="max-w-7xl mx-auto">
           <Outlet />
         </div>
+        <footer className="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-sm p-2 flex items-center justify-center gap-3 text-xs z-0">
+          <a href="https://github.com/palamut62" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-emerald-400 transition-colors">
+            <Github size={16} />
+          </a>
+          <a href="https://twitter.com/palamut62" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-emerald-400 transition-colors">
+            <Twitter size={16} />
+          </a>
+          <span className="text-slate-600">•</span>
+          <a href="https://www.umutcelik.online/" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-emerald-400 transition-colors">Help Center</a>
+          <span className="text-slate-600">•</span>
+          <a href="#" className="text-slate-400 hover:text-emerald-400 transition-colors">Terms</a>
+          <span className="text-slate-600">•</span>
+          <a href="#" className="text-slate-400 hover:text-emerald-400 transition-colors">Privacy</a>
+          <span className="text-slate-600">•</span>
+          <span className="text-slate-400"> 2024 palamut62</span>
+        </footer>
       </main>
     </div>
   );

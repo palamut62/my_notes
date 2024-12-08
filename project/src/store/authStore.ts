@@ -51,15 +51,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (!user) return;
 
     try {
+      console.log('Marking code as shown for user:', user.id);
       const { error } = await supabase
         .from('user_profiles')
         .update({ code_shown: true })
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error marking code as shown:', error);
+        throw error;
+      }
+
       set({ oneTimeCodeShown: true });
     } catch (error) {
-      console.error('Error marking code as shown:', error);
+      console.error('Error in markOneTimeCodeAsShown:', error);
     }
   },
 
@@ -109,32 +114,62 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signIn: async (email: string, password: string) => {
-    set({ loading: true });
+    set({ loading: true, error: null });
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // First sign in the user
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (signInError) throw signInError;
 
-      // Create user profile if it doesn't exist
-      if (data.user) {
-        const { error: profileError } = await supabase
+      if (signInData.user) {
+        // Check for existing profile
+        const { data: existingProfile } = await supabase
           .from('user_profiles')
-          .upsert({
-            user_id: data.user.id,
-          })
-          .select()
+          .select('one_time_code, code_shown')
+          .eq('user_id', signInData.user.id)
           .single();
 
-        if (profileError) {
-          console.error('Error creating user profile:', profileError);
+        if (!existingProfile) {
+          // No profile exists, create one with a new one-time code
+          const oneTimeCode = Math.floor(100000 + Math.random() * 900000).toString();
+          console.log('Creating new profile with code:', oneTimeCode);
+
+          const { error: createError } = await supabase
+            .from('user_profiles')
+            .insert({
+              user_id: signInData.user.id,
+              one_time_code: oneTimeCode,
+              code_shown: false,
+              code_generated_at: new Date().toISOString()
+            });
+
+          if (createError) {
+            console.error('Error creating profile:', createError);
+            throw createError;
+          }
+
+          set({ 
+            oneTimeCode,
+            oneTimeCodeShown: false,
+            user: signInData.user,
+            session: signInData.session
+          });
+        } else {
+          // Profile exists, set the state
+          set({
+            oneTimeCode: existingProfile.one_time_code,
+            oneTimeCodeShown: existingProfile.code_shown,
+            user: signInData.user,
+            session: signInData.session
+          });
         }
       }
-
-      set({ user: data.user, session: data.session });
     } catch (error: any) {
+      console.error('Sign in error:', error);
+      set({ error: error.message });
       throw error;
     } finally {
       set({ loading: false });

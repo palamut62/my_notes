@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import Passwords from './pages/Passwords';
 import Files from './pages/Files';
@@ -10,6 +12,7 @@ import Notes from './pages/Notes';
 import Profile from './pages/Profile';
 import Archive from './pages/Archive';
 import Trash from './pages/Trash';
+import AuthCallback from './pages/AuthCallback';
 import { useAuthStore } from './store/authStore';
 import { Toaster } from 'react-hot-toast';
 
@@ -38,6 +41,9 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route element={
           <PrivateRoute>
             <Layout />

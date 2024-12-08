@@ -7,14 +7,17 @@ import { useNoteStore } from '../store/noteStore';
 import { useEffect, useState } from 'react';
 import Modal from '../components/Modal';
 import { getFileTypeColor, getFileExtension, getFileTypeIcon } from '../lib/utils';
+import { supabase } from '../lib/supabase';
 
 export default function Dashboard() {
-  const { user, oneTimeCode, oneTimeCodeShown, generateOneTimeCode, markOneTimeCodeAsShown } = useAuthStore();
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const { passwords, fetchPasswords } = usePasswordStore();
   const { files, fetchFiles } = useFileStore();
   const { notes, fetchNotes } = useNoteStore();
   const [showOneTimeCodeModal, setShowOneTimeCodeModal] = useState(false);
+  const [oneTimeCode, setOneTimeCode] = useState<string | null>(null);
+  const [codeShown, setCodeShown] = useState(false);
 
   useEffect(() => {
     fetchPasswords();
@@ -24,18 +27,56 @@ export default function Dashboard() {
 
   useEffect(() => {
     const checkOneTimeCode = async () => {
-      if (!oneTimeCode && !oneTimeCodeShown) {
-        try {
-          await generateOneTimeCode();
-          setShowOneTimeCodeModal(true);
-        } catch (error) {
-          console.error('Error generating one-time code:', error);
+      if (!user) return;
+
+      try {
+        // Check user's profile for one-time code
+        const { data: profile, error } = await supabase
+          .from('user_profiles')
+          .select('one_time_code, code_shown')
+          .eq('user_id', user.id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching profile:', error);
+          return;
         }
+
+        if (profile && profile.one_time_code && !profile.code_shown) {
+          console.log('Found unused one-time code');
+          setOneTimeCode(profile.one_time_code);
+          setCodeShown(profile.code_shown);
+          setShowOneTimeCodeModal(true);
+        }
+      } catch (error) {
+        console.error('Error checking one-time code:', error);
       }
     };
 
     checkOneTimeCode();
-  }, [oneTimeCode, oneTimeCodeShown, generateOneTimeCode]);
+  }, [user]);
+
+  const handleCloseOneTimeCodeModal = async () => {
+    if (!user) return;
+
+    try {
+      // Update code_shown status in database
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({ code_shown: true })
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error updating code shown status:', error);
+        throw error;
+      }
+
+      setShowOneTimeCodeModal(false);
+      setCodeShown(true);
+    } catch (error) {
+      console.error('Error marking code as shown:', error);
+    }
+  };
 
   const handleCopyCode = () => {
     if (oneTimeCode) {
@@ -46,19 +87,16 @@ export default function Dashboard() {
   const handleDownloadCode = () => {
     if (oneTimeCode) {
       const element = document.createElement('a');
-      const file = new Blob([`Your one-time code: ${oneTimeCode}\nGenerated on: ${new Date().toLocaleString()}`], 
-        { type: 'text/plain' });
+      const file = new Blob(
+        [`Your one-time code: ${oneTimeCode}\nGenerated on: ${new Date().toLocaleString()}`],
+        { type: 'text/plain' }
+      );
       element.href = URL.createObjectURL(file);
       element.download = 'one-time-code.txt';
       document.body.appendChild(element);
       element.click();
       document.body.removeChild(element);
     }
-  };
-
-  const handleCloseOneTimeCodeModal = () => {
-    markOneTimeCodeAsShown();
-    setShowOneTimeCodeModal(false);
   };
 
   // Calculate security score based on password strength and 2FA
@@ -100,11 +138,11 @@ export default function Dashboard() {
   return (
     <div className="space-y-8">
       {/* One Time Code Modal */}
-      {showOneTimeCodeModal && oneTimeCode && (
+      {showOneTimeCodeModal && oneTimeCode && !codeShown && (
         <Modal
-          isOpen={showOneTimeCodeModal}
-          onClose={handleCloseOneTimeCodeModal}
-          title="Your One-Time Code"
+          isOpen={true}
+          onClose={() => {}} // Prevent closing by clicking outside
+          title="Your One-Time Security Code"
           maxWidth="sm:max-w-md"
         >
           <div className="space-y-4">
